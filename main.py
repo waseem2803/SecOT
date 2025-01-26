@@ -9,7 +9,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 import sys
-from modules import extract,debug
+from modules import dump,debug
+import pyfiglet
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -27,7 +28,7 @@ class MainWindow(QMainWindow):
 
         # Create the nav bar container
         self.nav_container = QWidget()
-        self.nav_container.setStyleSheet("background-color: 232, 236, 238;")  # Light blue background
+        self.nav_container.setStyleSheet("background-color:;")  # Light blue background
         self.nav_bar_layout = QHBoxLayout()
         self.nav_container.setFixedHeight(60)  # Set the height of the nav container
         self.nav_bar_layout.setContentsMargins(10, 10, 10, 10)  # Add padding around the nav bar
@@ -36,17 +37,10 @@ class MainWindow(QMainWindow):
 
         # Add buttons to the nav bar
         self.create_nav_buttons()
-
+        display_character = pyfiglet.Figlet(font="starwars")
+        nameapp = QLabel(display_character.renderText("SecOT v1.0"))
         # Create the function display container
-        self.function_window = QLabel(""" 
- _____              _____  _____ 
-/  ___|            |  _  ||_   _|
-\ `--.   ___   ___ | | | |  | |  
- `--. \ / _ \ / __|| | | |  | |  
-/\__/ /|  __/| (__ \ \_/ /  | |  
-\____/  \___| \___| \___/   \_/  
-                                 
-                                   """)  # Initial text
+        self.function_window = nameapp  # Initial text
         self.function_window.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center text
         self.function_window.setStyleSheet(
             """
@@ -84,14 +78,19 @@ class MainWindow(QMainWindow):
     # Functions to update the function window content
     def Debugger(self):
          self.main_layout.removeWidget(self.function_window)
-         widget = debug.SerialMonitorWidget()
-         self.main_layout.addWidget(widget)
+         self.function_window = debug.SerialMonitorWidget()
+         self.main_layout.addWidget(self.function_window)
 
     def Dump(self):
-        self.function_window.setText("You are now viewing Function 1")
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = dump.DumpFirmware()
+        self.main_layout.addWidget(self.function_window)
 
     def Extract(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = QLabel()
         self.function_window.setText("You are now viewing Function 2")
+        self.main_layout.addWidget(self.function_window)
 
     def Analyze(self):
         self.function_window.setText("You are now viewing Function 3")
