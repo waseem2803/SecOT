@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 import sys
-
+from modules import extract,debug
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
 
         # Create the nav bar container
         self.nav_container = QWidget()
-        self.nav_container.setStyleSheet("background-color: grey;")  # Light blue background
+        self.nav_container.setStyleSheet("background-color: 232, 236, 238;")  # Light blue background
         self.nav_bar_layout = QHBoxLayout()
         self.nav_container.setFixedHeight(60)  # Set the height of the nav container
         self.nav_bar_layout.setContentsMargins(10, 10, 10, 10)  # Add padding around the nav bar
@@ -38,12 +38,19 @@ class MainWindow(QMainWindow):
         self.create_nav_buttons()
 
         # Create the function display container
-        self.function_window = QLabel("Welcome to the Application")
+        self.function_window = QLabel(""" 
+ _____              _____  _____ 
+/  ___|            |  _  ||_   _|
+\ `--.   ___   ___ | | | |  | |  
+ `--. \ / _ \ / __|| | | |  | |  
+/\__/ /|  __/| (__ \ \_/ /  | |  
+\____/  \___| \___| \___/   \_/  
+                                 
+                                   """)  # Initial text
         self.function_window.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center text
         self.function_window.setStyleSheet(
             """
             background-color: white;  /* White background for the function window */
-            border: 0.5px solid black; /* Black border around the function window */
             font-size: 20px;         /* Font size for content */
             """
         )
@@ -76,7 +83,9 @@ class MainWindow(QMainWindow):
 
     # Functions to update the function window content
     def Debugger(self):
-        self.function_window.setText("You are now viewing Function 1")
+         self.main_layout.removeWidget(self.function_window)
+         widget = debug.SerialMonitorWidget()
+         self.main_layout.addWidget(widget)
 
     def Dump(self):
         self.function_window.setText("You are now viewing Function 1")
