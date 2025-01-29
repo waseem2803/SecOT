@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 import sys
-from modules import dump,debug
+from modules import dump,debug,extract_bin
 import pyfiglet
 
 class MainWindow(QMainWindow):
@@ -88,12 +88,14 @@ class MainWindow(QMainWindow):
 
     def Extract(self):
         self.main_layout.removeWidget(self.function_window)
-        self.function_window = QLabel()
-        self.function_window.setText("You are now viewing Function 2")
+        self.function_window = extract_bin.BinwalkFileExtractor()
         self.main_layout.addWidget(self.function_window)
 
     def Analyze(self):
-        self.function_window.setText("You are now viewing Function 3")
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = QLabel()
+        self.function_window.setText("You are now viewing Function 2")
+        self.main_layout.addWidget(self.function_window)
 
     def scan(self):
         self.function_window.setText("You are now viewing Function 4")
