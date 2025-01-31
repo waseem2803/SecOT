@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 import sys
 from modules import dump,debug,extract_bin
 import pyfiglet
@@ -15,7 +16,7 @@ import pyfiglet
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PyQt6 Application with Nav Bar and Function Window")
+        self.setWindowTitle("SecOT:IoT penetration testing platform")  # Window title
         self.setGeometry(100, 100, 800, 600)  # Initial size
 
         # Main container widget
@@ -37,8 +38,11 @@ class MainWindow(QMainWindow):
 
         # Add buttons to the nav bar
         self.create_nav_buttons()
-        display_character = pyfiglet.Figlet(font="starwars")
+        display_character = pyfiglet.Figlet(font="epic")
         nameapp = QLabel(display_character.renderText("SecOT v1.0"))
+        font = QFont("Courier New")  # Common monospace font
+        font.setPointSize(10)  # Adjust as needed
+        nameapp.setFont(font)
         # Create the function display container
         self.function_window = nameapp  # Initial text
         self.function_window.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center text
@@ -53,24 +57,33 @@ class MainWindow(QMainWindow):
     def create_nav_buttons(self):
         # Create buttons for each function
         buttons = [
-            ("DEBUGGER", self.Debugger),
-            ("DUMP", self.Dump),
-            ("EXTRACT", self.Extract),
-            ("ANALYZE", self.Analyze),
-            ("SCAN", self.scan),
-            ("FUZZ", self.fuzz),
+            ("Debugger", self.Debugger),
+            ("Dump", self.Dump),
+            ("Extract", self.Extract),
+            ("Analyze", self.Analyze),
+            ("Network Scan", self.scan),
+            ("Hash Cracker", self.fuzz),
         ]
 
         for name, handler in buttons:
             button = QPushButton(name)
             button.setStyleSheet(
-                """
-                padding: 10px 20px; 
-                font-size: 14px; 
-                border: 1px solid #ccc; 
-                border-radius: 5px;
-                background-color: white; 
-                """
+            """
+                QPushButton {
+                    padding: 10px 20px; 
+                    font-size: 14px; 
+                    border: 1px solid #ccc; 
+                    border-radius: 5px;
+                    background-color: white; 
+                }
+                QPushButton:pressed {
+                    background-color: grey; 
+                }
+                QPushButton:hover {
+                    background-color: #f0f0f0;
+                }
+            """
+ 
             )
             button.clicked.connect(handler)  # Connect each button to its function
             self.nav_bar_layout.addWidget(button)
