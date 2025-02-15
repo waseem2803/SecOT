@@ -5,16 +5,16 @@ from PyQt6.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox
 )
 from PyQt6.QtCore import Qt
-
-class BinwalkFileExtractor(QMainWindow):
+from pathlib import Path
+class BinwalkFileExtractor(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Binwalk File Extractor")
         self.setGeometry(200, 200, 800, 600)
 
         # Central widget
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+       # central_widget = QWidget()
+        #self.setCentralWidget(central_widget)
 
         # Layouts
         main_layout = QHBoxLayout()
@@ -52,7 +52,7 @@ class BinwalkFileExtractor(QMainWindow):
         main_layout.addLayout(left_layout, 1)
         main_layout.addLayout(right_layout, 3)
 
-        central_widget.setLayout(main_layout)
+        self.setLayout(main_layout)
 
         # Instance variables
         self.extracted_dir = None
@@ -116,17 +116,22 @@ class BinwalkFileExtractor(QMainWindow):
     def display_file_content(self, item):
         if not self.extracted_dir:
             return
+        print(self.extracted_dir)
+        b_path = Path(self.extracted_dir)
+        relative_path = Path(*self.get_item_path(item))
+        # Debug: Print the relative path
+        print(f"Relative path: {relative_path}")
+        #file_path = relative_path.resolve()
+        if relative_path.parts[0] == b_path.name:
+            relative_path = relative_path.relative_to(relative_path.parts[0])
 
-        # Construct the file path
-        file_path = os.path.join(self.extracted_dir, *self.get_item_path(item))
-
-        # Normalize path to avoid issues
-        file_path = os.path.abspath(os.path.normpath(file_path))
-
+        file_path = b_path / relative_path  # Join after fixing the duplication
+        print(file_path) 
         # Debug: Print the file path
         print(f"Resolved file path: {file_path}")
 
         if os.path.isdir(file_path):
+            print("Read as directory")
             return  # Ignore directories
 
         if not os.path.exists(file_path):
@@ -136,8 +141,10 @@ class BinwalkFileExtractor(QMainWindow):
         try:
             with open(file_path, "r", errors="ignore") as file:
                 content = file.read()
+                print(content)
                 self.file_viewer.setText(content)
         except Exception as e:
+            print("Error in reading")
             self.file_viewer.setText(f"Failed to read file: {e}")
 
 
