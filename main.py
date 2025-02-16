@@ -11,6 +11,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
 from modules import dump,debug,extract_bin
+from L_config import temp_path_b
 import pyfiglet
 
 class MainWindow(QMainWindow):

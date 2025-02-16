@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from pathlib import Path
+from L_config import temp_path_b
+
 class BinwalkFileExtractor(QWidget):
     def __init__(self):
         super().__init__()
@@ -67,7 +69,7 @@ class BinwalkFileExtractor(QWidget):
         self.status_label.setText("Status: Extracting...")
         QApplication.processEvents()
         try:
-            subprocess.run(["binwalk", "--extract", file_path], check=True)
+            subprocess.run(["binwalk","-e" , "--dd=\".*\"", "--directory=" , temp_path_b, file_path],check=True)
         except FileNotFoundError:
             QMessageBox.critical(self, "Error", "Binwalk is not installed or not found in PATH.")
             self.status_label.setText("Status: Binwalk not found.")
