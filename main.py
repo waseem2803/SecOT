@@ -38,7 +38,7 @@ class MainWindow(QMainWindow):
 
         # Add buttons to the nav bar
         self.create_nav_buttons()
-        display_character = pyfiglet.Figlet(font="epic")
+        display_character = pyfiglet.Figlet(font='slant')
         nameapp = QLabel(display_character.renderText("SecOT v1.0"))
         font = QFont("Courier New")  # Common monospace font
         font.setPointSize(10)  # Adjust as needed
@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
                     font-size: 14px; 
                     border: 1px solid #ccc; 
                     border-radius: 5px;
-                    background-color: white; 
+                    background-color: black; 
                 }
                 QPushButton:pressed {
                     background-color: grey; 
