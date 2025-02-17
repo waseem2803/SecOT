@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
-from modules import dump,debug,extract_bin,file_extract
+from modules import dump, debug, extract_bin, file_extract, dependency_scanner
 import pyfiglet
 
 class MainWindow(QMainWindow):
@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
             ("Extract", self.Extract),
             ("Analyze", self.Analyze),
             ("Embedded Files Extractor", self.Embedded_File_Extractor),
+            ("Dependency Scanner", self.Dependency_Scanner),
             ("Network Scan", self.scan),
             ("Hash Cracker", self.fuzz),
         ]
@@ -79,6 +80,7 @@ class MainWindow(QMainWindow):
                 }
                 QPushButton:pressed {
                     background-color: grey; 
+                    
                 }
                 QPushButton:hover {
                     background-color: #f0f0f0;
@@ -103,6 +105,11 @@ class MainWindow(QMainWindow):
     def Embedded_File_Extractor(self):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = file_extract.EmbeddedFileExtractor()
+        self.main_layout.addWidget(self.function_window)
+
+    def Dependency_Scanner(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = dependency_scanner.DependencyScanner()
         self.main_layout.addWidget(self.function_window)
 
     def Extract(self):

@@ -2,7 +2,7 @@ import os
 import subprocess
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox
+    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox, QSplitter
 )
 from PyQt6.QtCore import Qt, QStringListModel
 from pathlib import Path
@@ -147,9 +147,19 @@ class EmbeddedFileExtractor(QWidget):
         self.setGeometry(200, 200, 800, 600)
 
         # Layouts
-        main_layout = QHBoxLayout()
+        main_layout = QVBoxLayout()
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        top_splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # Left layout
+        left_widget = QWidget()
         left_layout = QVBoxLayout()
+        left_widget.setLayout(left_layout)
+
+        # Right layout
+        right_widget = QWidget()
         right_layout = QVBoxLayout()
+        right_widget.setLayout(right_layout)
 
         # File Tree Widget
         self.file_tree = QTreeWidget()
@@ -169,25 +179,29 @@ class EmbeddedFileExtractor(QWidget):
         self.select_dir_button.clicked.connect(self.select_directory)
 
         # Status Label
-        self.status_label = QLabel("Status: Ready")
+        
 
         # Terminal Output
         self.terminal_output = QTextEdit()
         self.terminal_output.setReadOnly(True)
         self.terminal_output.setStyleSheet("background-color: black; color: white; font-family: Consolas;")
-        self.terminal_output.setMaximumHeight(100)
+        
+        
         # Arrange layouts
         left_layout.addWidget(self.load_button)
         left_layout.addWidget(self.select_dir_button)
         left_layout.addWidget(self.file_tree)
-        left_layout.addWidget(self.status_label)
+        
 
         right_layout.addWidget(self.file_viewer)
-        right_layout.addWidget(self.terminal_output)
 
-        main_layout.addLayout(left_layout, 1)
-        main_layout.addLayout(right_layout, 3)
+        top_splitter.addWidget(left_widget)
+        top_splitter.addWidget(right_widget)
 
+        splitter.addWidget(top_splitter)
+        splitter.addWidget(self.terminal_output)
+
+        main_layout.addWidget(splitter)
         self.setLayout(main_layout)
 
         # Instance variables
