@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
-from modules import dump,debug,extract_bin
+from modules import dump,debug,extract_bin,file_extract
 import pyfiglet
 
 class MainWindow(QMainWindow):
@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
             ("Dump", self.Dump),
             ("Extract", self.Extract),
             ("Analyze", self.Analyze),
+            ("Embedded Files Extractor", self.Embedded_File_Extractor),
             ("Network Scan", self.scan),
             ("Hash Cracker", self.fuzz),
         ]
@@ -97,6 +98,11 @@ class MainWindow(QMainWindow):
     def Dump(self):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = dump.DumpFirmware()
+        self.main_layout.addWidget(self.function_window)
+    
+    def Embedded_File_Extractor(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = file_extract.EmbeddedFileExtractor()
         self.main_layout.addWidget(self.function_window)
 
     def Extract(self):
