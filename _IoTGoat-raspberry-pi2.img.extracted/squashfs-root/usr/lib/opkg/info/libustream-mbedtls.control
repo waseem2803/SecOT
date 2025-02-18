@@ -1,0 +1,10 @@
+Package: libustream-mbedtls
+Version: 2018-07-30-23a3f283-1
+Depends: libc, libubox, libmbedtls
+Source: package/libs/ustream-ssl
+License: ISC
+Section: libs
+Maintainer: Felix Fietkau <nbd@nbd.name>
+Architecture: arm_cortex-a7_neon-vfpv4
+Installed-Size: 3452
+Description:  ustream SSL Library (mbedtls)

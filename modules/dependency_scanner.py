@@ -5,8 +5,8 @@ import requests
 import subprocess
 import re
 import time
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QTextEdit, QLabel, QListWidget, QListWidgetItem, QSplitter
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QTextEdit, QLabel, QListWidget, QListWidgetItem, QSplitter
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from bs4 import BeautifulSoup
 from datetime import datetime
 
