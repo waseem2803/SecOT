@@ -2,21 +2,16 @@ import os
 import subprocess
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox
+    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox, QCheckBox, QComboBox
 )
 from PyQt6.QtCore import Qt
 from pathlib import Path
-from L_config import temp_path_b
 
 class BinwalkFileExtractor(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Binwalk File Extractor")
         self.setGeometry(200, 200, 800, 600)
-
-        # Central widget
-       # central_widget = QWidget()
-        #self.setCentralWidget(central_widget)
 
         # Layouts
         main_layout = QHBoxLayout()
@@ -40,12 +35,23 @@ class BinwalkFileExtractor(QWidget):
         self.select_dir_button = QPushButton("Select Directory")
         self.select_dir_button.clicked.connect(self.select_directory)
 
+        # Magic Bytes Extraction Checkbox
+        self.magic_bytes_checkbox = QCheckBox("Use Magic Bytes for Extraction")
+        self.magic_bytes_checkbox.stateChanged.connect(self.toggle_fs_dropdown)
+
+        # Filesystem Type Dropdown
+        self.fs_type_dropdown = QComboBox()
+        self.fs_type_dropdown.addItems(["SquashFS", "Ext", "JFFS2", "UBIFS"])
+        self.fs_type_dropdown.setEnabled(False)
+
         # Status Label
         self.status_label = QLabel("Status: Ready")
 
         # Arrange layouts
         left_layout.addWidget(self.load_button)
         left_layout.addWidget(self.select_dir_button)
+        left_layout.addWidget(self.magic_bytes_checkbox)
+        left_layout.addWidget(self.fs_type_dropdown)
         left_layout.addWidget(self.file_tree)
         left_layout.addWidget(self.status_label)
 
@@ -59,17 +65,23 @@ class BinwalkFileExtractor(QWidget):
         # Instance variables
         self.extracted_dir = None
 
+    def toggle_fs_dropdown(self):
+        self.fs_type_dropdown.setEnabled(self.magic_bytes_checkbox.isChecked())
+
     def load_binary_file(self):
-        # Select binary file
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Binary File", "", "All Files (*)")
         if not file_path:
             return
 
-        # Run binwalk to extract files
+        magic_bytes_option = ""
+        if self.magic_bytes_checkbox.isChecked():
+            fs_type = self.fs_type_dropdown.currentText()
+            magic_bytes_option = self.get_magic_bytes_option(fs_type)
+        
         self.status_label.setText("Status: Extracting...")
         QApplication.processEvents()
         try:
-            subprocess.run(["binwalk","-e" , "--dd=\".*\"", "--directory=" , temp_path_b, file_path],check=True)
+            subprocess.run(["binwalk", "--extract"] + (magic_bytes_option.split() if magic_bytes_option else []) + [file_path], check=True)
         except FileNotFoundError:
             QMessageBox.critical(self, "Error", "Binwalk is not installed or not found in PATH.")
             self.status_label.setText("Status: Binwalk not found.")
@@ -79,7 +91,6 @@ class BinwalkFileExtractor(QWidget):
             self.status_label.setText("Status: Extraction failed.")
             return
 
-        # Locate the extraction directory
         base_name = os.path.basename(file_path)
         self.extracted_dir = os.path.join(os.getcwd(), f"_{base_name}.extracted")
 
@@ -88,12 +99,19 @@ class BinwalkFileExtractor(QWidget):
             self.status_label.setText("Status: No files extracted.")
             return
 
-        # Populate file tree
         self.populate_file_tree()
         self.status_label.setText("Status: Extraction complete.")
 
+    def get_magic_bytes_option(self, fs_type):
+        fs_options = {
+            "SquashFS": "-D 'squashfs'",
+            "Ext": "-D 'ext'",
+            "JFFS2": "-D 'jffs2'",
+            "UBIFS": "-D 'ubifs'",
+        }
+        return fs_options.get(fs_type, "")
+
     def select_directory(self):
-        # Select a directory
         directory = QFileDialog.getExistingDirectory(self, "Select Directory")
         if directory:
             self.extracted_dir = directory
@@ -118,23 +136,17 @@ class BinwalkFileExtractor(QWidget):
     def display_file_content(self, item):
         if not self.extracted_dir:
             return
-        print(self.extracted_dir)
+
         b_path = Path(self.extracted_dir)
         relative_path = Path(*self.get_item_path(item))
-        # Debug: Print the relative path
-        print(f"Relative path: {relative_path}")
-        #file_path = relative_path.resolve()
+        
         if relative_path.parts[0] == b_path.name:
             relative_path = relative_path.relative_to(relative_path.parts[0])
 
-        file_path = b_path / relative_path  # Join after fixing the duplication
-        print(file_path) 
-        # Debug: Print the file path
-        print(f"Resolved file path: {file_path}")
-
+        file_path = b_path / relative_path  
+        
         if os.path.isdir(file_path):
-            print("Read as directory")
-            return  # Ignore directories
+            return  
 
         if not os.path.exists(file_path):
             self.file_viewer.setText(f"File not found: {file_path}")
@@ -143,12 +155,9 @@ class BinwalkFileExtractor(QWidget):
         try:
             with open(file_path, "r", errors="ignore") as file:
                 content = file.read()
-                print(content)
                 self.file_viewer.setText(content)
         except Exception as e:
-            print("Error in reading")
             self.file_viewer.setText(f"Failed to read file: {e}")
-
 
     def get_item_path(self, item):
         path = []
