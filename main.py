@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
-from modules import dump,debug,extract_bin
+from modules import dump,debug,extract_bin,network
 from L_config import temp_path_b
 import pyfiglet
 
@@ -112,7 +112,9 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.function_window)
 
     def scan(self):
-        self.function_window.setText("You are now viewing Function 4")
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = network.NetworkAnalyzer()
+        self.main_layout.addWidget(self.function_window)
 
     def fuzz(self):
         self.function_window.setText("You are now viewing Function 5")
