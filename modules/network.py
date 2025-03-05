@@ -17,19 +17,31 @@ def get_local_ip():
 class NetworkScanner(QThread):
     scan_complete = pyqtSignal(list)
     
+    def __init__(self, scan_method):
+        super().__init__()
+        self.scan_method = scan_method
+    
     def run(self):
         active_hosts = []
         try:
             local_ip = get_local_ip()
-            ip_base = ".".join(local_ip.split("." )[:-1]) + ".1/24"
+            ip_base = ".".join(local_ip.split(".")[:-1]) + ".1/24"
             
-            arp_request = scapy.ARP(pdst=ip_base)
-            broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-            arp_request_broadcast = broadcast / arp_request
-            answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
-            
-            for element in answered_list:
-                active_hosts.append(element[1].psrc)
+            if self.scan_method == "ARP":
+                arp_request = scapy.ARP(pdst=ip_base)
+                broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+                arp_request_broadcast = broadcast / arp_request
+                answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
+                
+                for element in answered_list:
+                    active_hosts.append(element[1].psrc)
+            else:  # Ping Scan
+                for i in range(1, 255):
+                    ip = f"{'.'.join(local_ip.split('.')[:-1])}.{i}"
+                    print(f"Pinging {ip}...")  # Display each IP being scanned
+                    response = scapy.sr1(scapy.IP(dst=ip)/scapy.ICMP(), timeout=1, verbose=False)
+                    if response:
+                        active_hosts.append(ip)
         except Exception as e:
             print("Error scanning network:", e)
         self.scan_complete.emit(active_hosts)
@@ -66,6 +78,12 @@ class NetworkAnalyzer(QWidget):
         
         # Left Section - Host Selection
         left_panel = QVBoxLayout()
+        
+        self.scan_method_dropdown = QComboBox()
+        self.scan_method_dropdown.addItems(["ARP", "Ping"])
+        left_panel.addWidget(QLabel("Scan Method:"))
+        left_panel.addWidget(self.scan_method_dropdown)
+        
         self.scan_button = QPushButton("Scan Network")
         self.scan_button.clicked.connect(self.scan_network)
         left_panel.addWidget(self.scan_button)
@@ -120,8 +138,9 @@ class NetworkAnalyzer(QWidget):
         self.port_range_input.setEnabled(text == "Custom Range")
     
     def scan_network(self):
-        self.result_text.append("Scanning network...")
-        self.scanner = NetworkScanner()
+        scan_method = self.scan_method_dropdown.currentText()
+        self.result_text.append(f"Scanning network using {scan_method}...")
+        self.scanner = NetworkScanner(scan_method)
         self.scanner.scan_complete.connect(self.display_hosts)
         self.scanner.start()
         
