@@ -298,8 +298,8 @@ class DependencyScanner(QWidget):
         main_layout.addLayout(top_layout)
         
         # Splitter for dependency list and CVE details
-        vertical_splitter = QSplitter(Qt.Vertical)
-        horizontal_splitter = QSplitter(Qt.Horizontal)
+        vertical_splitter = QSplitter(Qt.Orientation.Vertical)
+        horizontal_splitter = QSplitter(Qt.Orientation.Horizontal)
         
         # Widget A - List of vulnerable dependencies
         widget_a = QWidget()

@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
                     font-size: 14px; 
                     border: 1px solid #ccc; 
                     border-radius: 5px;
-                    background-color: black; 
+                    background-color: ; 
                 }
                 QPushButton:pressed {
                     background-color: grey; 
