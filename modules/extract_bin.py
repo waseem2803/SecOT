@@ -2,10 +2,11 @@ import os
 import subprocess
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox, QCheckBox, QComboBox
+    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox, QCheckBox, QComboBox , QSizePolicy
 )
 from PyQt6.QtCore import Qt
 from pathlib import Path
+import magic
 
 class BinwalkFileExtractor(QWidget):
     def __init__(self):
@@ -14,15 +15,17 @@ class BinwalkFileExtractor(QWidget):
         self.setGeometry(200, 200, 800, 600)
 
         # Layouts
-        main_layout = QHBoxLayout()
+        main_layout = QVBoxLayout()
+        top_layout = QHBoxLayout()
         left_layout = QVBoxLayout()
         right_layout = QVBoxLayout()
+        bottom_layout = QHBoxLayout()
 
         # File Tree Widget
         self.file_tree = QTreeWidget()
         self.file_tree.setHeaderHidden(True)
         self.file_tree.itemClicked.connect(self.display_file_content)
-
+    
         # File Content Viewer
         self.file_viewer = QTextEdit()
         self.file_viewer.setReadOnly(True)
@@ -35,6 +38,8 @@ class BinwalkFileExtractor(QWidget):
         self.select_dir_button = QPushButton("Select Directory")
         self.select_dir_button.clicked.connect(self.select_directory)
 
+        #scan button
+        self.binwalk_button = QPushButton("Scan Binary File")
         # Magic Bytes Extraction Checkbox
         self.magic_bytes_checkbox = QCheckBox("Use Magic Bytes for Extraction")
         self.magic_bytes_checkbox.stateChanged.connect(self.toggle_fs_dropdown)
@@ -44,6 +49,11 @@ class BinwalkFileExtractor(QWidget):
         self.fs_type_dropdown.addItems(["SquashFS", "Ext", "JFFS2", "UBIFS"])
         self.fs_type_dropdown.setEnabled(False)
 
+        #binwalk file scan
+       
+        self.file_scan = QTextEdit()
+        self.file_scan.setReadOnly(True)
+        self.binwalk_button.clicked.connect(self.read_binwalk)
         # Status Label
         self.status_label = QLabel("Status: Ready")
 
@@ -54,16 +64,33 @@ class BinwalkFileExtractor(QWidget):
         left_layout.addWidget(self.fs_type_dropdown)
         left_layout.addWidget(self.file_tree)
         left_layout.addWidget(self.status_label)
-
+        left_layout.addWidget(self.binwalk_button)
+        
         right_layout.addWidget(self.file_viewer)
 
-        main_layout.addLayout(left_layout, 1)
-        main_layout.addLayout(right_layout, 3)
+        bottom_layout.addWidget(self.file_scan)
+        
+
+        top_layout.addLayout(left_layout, 1)
+        top_layout.addLayout(right_layout, 3)
+        main_layout.addLayout(top_layout)
+        main_layout.addLayout(bottom_layout)
 
         self.setLayout(main_layout)
 
         # Instance variables
         self.extracted_dir = None
+
+    def read_binwalk(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select Binary File", "", "All Files (*)")
+        if not file_path:
+            return  # Exit if no file is selected
+        
+        try:
+            scan_result = subprocess.run(["binwalk", file_path], capture_output=True, text=True, check=True)
+            self.file_scan.setText(scan_result.stdout)  # Display the output in the QTextEdit
+        except subprocess.CalledProcessError as e:
+            self.file_scan.setText(f"Error running binwalk:\n{e}")
 
     def toggle_fs_dropdown(self):
         self.fs_type_dropdown.setEnabled(self.magic_bytes_checkbox.isChecked())

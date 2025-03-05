@@ -10,11 +10,14 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
-from modules import dump,debug,extract_bin,network
+from modules import dump,debug,extract_bin,network,hash_crac
 from L_config import temp_path_b
 import pyfiglet
+import os
+import sys
 
 class MainWindow(QMainWindow):
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SecOT:IoT penetration testing platform")  # Window title
@@ -63,7 +66,7 @@ class MainWindow(QMainWindow):
             ("Extract", self.Extract),
             ("Analyze", self.Analyze),
             ("Network Scan", self.scan),
-            ("Hash Cracker", self.fuzz),
+            ("Hash Cracker", self.hashcracker),
         ]
 
         for name, handler in buttons:
@@ -116,11 +119,17 @@ class MainWindow(QMainWindow):
         self.function_window = network.NetworkAnalyzer()
         self.main_layout.addWidget(self.function_window)
 
-    def fuzz(self):
-        self.function_window.setText("You are now viewing Function 5")
+    def hashcracker(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = hash_crac.HashCracker()
+        self.main_layout.addWidget(self.function_window)
 
 
 if __name__ == "__main__":
+    # Check if script is running with root privileges
+    if os.geteuid() != 0:
+        print("Re-running script with sudo...")
+        os.execvp("sudo", ["sudo", "/home/mohammed/secOT/SecOT/myenv_l/bin/python"] + sys.argv)
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
