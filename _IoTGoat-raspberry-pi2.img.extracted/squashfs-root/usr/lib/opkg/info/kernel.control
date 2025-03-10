@@ -1,9 +1,0 @@
-Package: kernel
-Version: 4.9.152-1-788707b8cd7f983457fcdd34f617ec3c
-Depends: libc
-Source: package/kernel/linux
-License: GPL-2.0
-Section: sys
-Architecture: arm_cortex-a7_neon-vfpv4
-Installed-Size: 106
-Description:  Virtual kernel package
