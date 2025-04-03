@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QLabel,
     QWidget,
+
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -15,6 +16,7 @@ from L_config import temp_path_b
 import pyfiglet
 import os
 import sys
+import signal
 
 class MainWindow(QMainWindow):
 
@@ -124,6 +126,12 @@ class MainWindow(QMainWindow):
         self.function_window = hash_crac.HashCracker()
         self.main_layout.addWidget(self.function_window)
 
+    def quit_gracefully(sig,frame):
+        print("Quitting application...")
+        QApplication.quit()
+
+    signal.signal(signal.SIGINT, quit_gracefully)
+
 
 if __name__ == "__main__":
     # Check if script is running with root privileges
@@ -133,4 +141,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+  
     sys.exit(app.exec())

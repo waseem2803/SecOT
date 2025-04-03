@@ -16,17 +16,18 @@ def get_local_ip():
 
 class NetworkScanner(QThread):
     scan_complete = pyqtSignal(list)
-    
+
     def __init__(self, scan_method):
         super().__init__()
         self.scan_method = scan_method
-    
+        self.running = True  # Add a flag to stop scanning
+
     def run(self):
         active_hosts = []
         try:
             local_ip = get_local_ip()
-            ip_base = ".".join(local_ip.split(".")[:-1]) + ".1/24"
-            
+            ip_base = ".".join(local_ip.split(".")[:-1]) + ".0/24"
+
             if self.scan_method == "ARP":
                 arp_request = scapy.ARP(pdst=ip_base)
                 broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
@@ -34,17 +35,32 @@ class NetworkScanner(QThread):
                 answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
                 
                 for element in answered_list:
+                    if not self.running:  # Check stop flag
+                        return
                     active_hosts.append(element[1].psrc)
-            else:  # Ping Scan
+
+            elif self.scan_method == "ICMP":
                 for i in range(1, 255):
+                    if not self.running:  # Check stop flag
+                        return
                     ip = f"{'.'.join(local_ip.split('.')[:-1])}.{i}"
-                    print(f"Pinging {ip}...")  # Display each IP being scanned
                     response = scapy.sr1(scapy.IP(dst=ip)/scapy.ICMP(), timeout=1, verbose=False)
                     if response:
                         active_hosts.append(ip)
+
+            elif self.scan_method == "Nmap":
+                nm = nmap.PortScanner()
+                nm.scan(hosts=ip_base, arguments="-sn")
+                active_hosts = nm.all_hosts()
+                
         except Exception as e:
             print("Error scanning network:", e)
+
         self.scan_complete.emit(active_hosts)
+
+    def stop(self):
+        self.running = False  # Set flag to stop scanning
+
 
 class PortScanner(QThread):
     scan_complete = pyqtSignal(dict)
@@ -54,19 +70,40 @@ class PortScanner(QThread):
         self.target_ip = target_ip
         self.scan_type = scan_type
         self.port_range = port_range
-    
+        self.running = True  # Allows stopping scan
+
     def run(self):
         open_ports = {}
         nm = nmap.PortScanner()
         try:
-            nm.scan(self.target_ip, arguments=f"{self.scan_type} -p {self.port_range}")
-            for port in nm[self.target_ip]["tcp"]:
-                service = nm[self.target_ip]["tcp"][port].get("name", "Unknown")
-                os_info = nm[self.target_ip].get("osmatch", [{}])[0].get("name", "Unknown OS")
-                open_ports[port] = f"{service} (OS: {os_info})"
+            # Run scan with proper Nmap arguments
+            nm.scan(hosts=self.target_ip, arguments=f"{self.scan_type} -p {self.port_range}")
+
+            # Check if the target IP is in the scan result
+            if self.target_ip in nm.all_hosts():
+                for proto in nm[self.target_ip].all_protocols():
+                    for port in nm[self.target_ip][proto].keys():
+                        if not self.running:
+                            return
+                        service = nm[self.target_ip][proto][port].get("name", "Unknown Service")
+                        open_ports[port] = f"{service}"
+
+                # OS Detection
+                os_info = "Unknown OS"
+                if "osmatch" in nm[self.target_ip] and len(nm[self.target_ip]["osmatch"]) > 0:
+                    os_info = nm[self.target_ip]["osmatch"][0].get("name", "Unknown OS")
+
+                open_ports["OS"] = os_info  # Store OS info in the dictionary
+            else:
+                print(f"No results for {self.target_ip}")
+
         except Exception as e:
             print("Error running Nmap:", e)
+
         self.scan_complete.emit(open_ports)
+
+    def stop(self):
+        self.running = False
 
 class NetworkAnalyzer(QWidget):
     def __init__(self, parent=None):
@@ -76,35 +113,38 @@ class NetworkAnalyzer(QWidget):
         
         main_layout = QHBoxLayout()
         
-        # Left Section - Host Selection
         left_panel = QVBoxLayout()
         
         self.scan_method_dropdown = QComboBox()
-        self.scan_method_dropdown.addItems(["ARP", "Ping"])
+        self.scan_method_dropdown.addItems(["ARP", "ICMP", "Nmap"])
         left_panel.addWidget(QLabel("Scan Method:"))
         left_panel.addWidget(self.scan_method_dropdown)
         
         self.scan_button = QPushButton("Scan Network")
         self.scan_button.clicked.connect(self.scan_network)
         left_panel.addWidget(self.scan_button)
+
+        self.scan_button_host = QPushButton("Scan Selected Host")
+        self.stop_host_scan = QPushButton("Stop Scan")
+        self.stop_host_scan.clicked.connect(self.stop_scan)
+        left_panel.addWidget(self.stop_host_scan)
         
         self.hosts_list = QListWidget()
         left_panel.addWidget(self.hosts_list)
         
         main_layout.addLayout(left_panel,1)
         
-        # Right Section - Scan Options
         right_panel = QVBoxLayout()
         
         scan_group = QGroupBox("Scan Options")
         scan_layout = QVBoxLayout()
         self.scan_type_dropdown = QComboBox()
-        self.scan_type_dropdown.addItems(["-sS", "-sT", "-sU", "-A", "-sV"])  # TCP SYN, TCP Connect, UDP, OS detection, Version detection
+        self.scan_type_dropdown.addItems(["SYN" , "TCP" , "UDP" , "Aggressive" , "version"]) #"-sS", "-sT", "-sU", "-A", "-sV"
         scan_layout.addWidget(QLabel("Scan Type:"))
         scan_layout.addWidget(self.scan_type_dropdown)
         
         self.protocol_dropdown = QComboBox()
-        self.protocol_dropdown.addItems(["All Ports", "MQTT (1883)", "CoAP (5683)", "Modbus (502)", "Custom Range"])
+        self.protocol_dropdown.addItems(["All Ports","Common IOT", "MQTT (1883)", "CoAP (5683)", "Modbus (502)", "Custom Range"])
         scan_layout.addWidget(QLabel("Protocol Scan:"))
         scan_layout.addWidget(self.protocol_dropdown)
         
@@ -115,14 +155,12 @@ class NetworkAnalyzer(QWidget):
         
         self.protocol_dropdown.currentTextChanged.connect(self.toggle_port_input)
         
-        self.scan_button_host = QPushButton("Scan Selected Host")
         self.scan_button_host.clicked.connect(self.scan_ports)
         scan_layout.addWidget(self.scan_button_host)
         
         scan_group.setLayout(scan_layout)
         right_panel.addWidget(scan_group)
         
-        # Results
         result_group = QGroupBox("Scan Results")
         result_layout = QVBoxLayout()
         self.result_text = QTextEdit()
@@ -139,10 +177,19 @@ class NetworkAnalyzer(QWidget):
     
     def scan_network(self):
         scan_method = self.scan_method_dropdown.currentText()
+        
+        # Stop the previous scan if it's running
+        if hasattr(self, 'scanner') and self.scanner.isRunning():
+            self.scanner.stop()
+            self.scanner.wait()  # Ensure the previous scan thread has stopped
+        
         self.result_text.append(f"Scanning network using {scan_method}...")
+        
+        # Start a new scan
         self.scanner = NetworkScanner(scan_method)
         self.scanner.scan_complete.connect(self.display_hosts)
         self.scanner.start()
+
         
     def display_hosts(self, hosts):
         self.hosts_list.clear()
@@ -155,6 +202,17 @@ class NetworkAnalyzer(QWidget):
         if selected_items:
             target_ip = selected_items[0].text()
             scan_type = self.scan_type_dropdown.currentText()
+
+            scanner_type = "-sS"
+            if scan_type == "TCP":
+                scanner_type = "-sT"
+            elif scan_type == "UDP":
+                scanner_type = "-sU"
+            elif scan_type == "Aggressive":
+                scanner_type = "-A"
+            elif scan_type == "version":
+                scanner_type = "-sV"
+
             protocol = self.protocol_dropdown.currentText()
             
             port_range = "1-1000"
@@ -164,6 +222,8 @@ class NetworkAnalyzer(QWidget):
                 port_range = "5683"
             elif protocol == "Modbus (502)":
                 port_range = "502"
+            elif protocol == "Common IOT":
+                port_range = "1883,5683,502"
             elif protocol == "Custom Range":
                 port_range = self.port_range_input.text()
             
@@ -173,6 +233,12 @@ class NetworkAnalyzer(QWidget):
             self.port_scanner.start()
         else:
             self.result_text.append("No host selected.")
+
+    def stop_scan(self):
+        if hasattr(self, 'scanner') and self.scanner.isRunning():
+            self.scanner.stop()
+            self.result_text.append("Network scan stopped.")
+
         
     def display_ports(self, ports):
         self.result_text.append("Open Ports:")

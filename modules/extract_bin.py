@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from pathlib import Path
 import magic
+from L_config import temp_path_b
 
 class BinwalkFileExtractor(QWidget):
     def __init__(self):
@@ -25,6 +26,7 @@ class BinwalkFileExtractor(QWidget):
         self.file_tree = QTreeWidget()
         self.file_tree.setHeaderHidden(True)
         self.file_tree.itemClicked.connect(self.display_file_content)
+        self.file_tree.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     
         # File Content Viewer
         self.file_viewer = QTextEdit()
@@ -87,7 +89,7 @@ class BinwalkFileExtractor(QWidget):
             return  # Exit if no file is selected
         
         try:
-            scan_result = subprocess.run(["binwalk", file_path], capture_output=True, text=True, check=True)
+            scan_result = subprocess.run(["binwalk", file_path ], capture_output=True, text=True, check=True)
             self.file_scan.setText(scan_result.stdout)  # Display the output in the QTextEdit
         except subprocess.CalledProcessError as e:
             self.file_scan.setText(f"Error running binwalk:\n{e}")
@@ -108,7 +110,7 @@ class BinwalkFileExtractor(QWidget):
         self.status_label.setText("Status: Extracting...")
         QApplication.processEvents()
         try:
-            subprocess.run(["binwalk", "--extract"] + (magic_bytes_option.split() if magic_bytes_option else []) + [file_path], check=True)
+            subprocess.run(["sudo","binwalk", "-e", "--run-as=root","--directory", temp_path_b, file_path], check=True , stdout=subprocess.DEVNULL)
         except FileNotFoundError:
             QMessageBox.critical(self, "Error", "Binwalk is not installed or not found in PATH.")
             self.status_label.setText("Status: Binwalk not found.")
@@ -119,7 +121,7 @@ class BinwalkFileExtractor(QWidget):
             return
 
         base_name = os.path.basename(file_path)
-        self.extracted_dir = os.path.join(os.getcwd(), f"_{base_name}.extracted")
+        self.extracted_dir = os.path.join(temp_path_b, f"_{base_name}.extracted")
 
         if not os.path.exists(self.extracted_dir):
             QMessageBox.warning(self, "Warning", "No files were extracted.")
@@ -162,35 +164,66 @@ class BinwalkFileExtractor(QWidget):
 
     def display_file_content(self, item):
         if not self.extracted_dir:
+            self.file_viewer.setText("Error: No extraction directory set")
             return
 
-        b_path = Path(self.extracted_dir)
-        relative_path = Path(*self.get_item_path(item))
-        
-        if relative_path.parts[0] == b_path.name:
-            relative_path = relative_path.relative_to(relative_path.parts[0])
+        # Get path parts from tree item
+        item_path_parts = self.get_item_path(item)
+        if not item_path_parts:
+            self.file_viewer.setText("Error: Invalid item path")
+            return
 
-        file_path = b_path / relative_path  
-        
-        if os.path.isdir(file_path):
-            return  
+        # Convert to Path objects
+        extracted_dir = Path(self.extracted_dir).resolve()
+        item_path = Path(*item_path_parts)
 
-        if not os.path.exists(file_path):
+        # Debug output
+        print(f"[DEBUG 1] Extracted dir: {extracted_dir}")
+        print(f"[DEBUG 2] Raw item path: {item_path}")
+
+        # SPECIAL FIX: Remove extracted_dir name if it appears at start of item_path
+        extracted_dir_name = extracted_dir.name
+        if item_path.parts and item_path.parts[0] == extracted_dir_name:
+            item_path = Path(*item_path.parts[1:])  # Remove first component
+            print(f"[DEBUG 3] Fixed item path: {item_path}")
+
+        # Construct final path
+        file_path = extracted_dir / item_path
+        file_path = file_path.resolve()
+
+        # Debug output
+        print(f"[DEBUG 4] Final file path: {file_path}")
+
+        # Handle file display
+        self.file_viewer.clear()
+
+        if file_path.is_dir():
+            self.file_viewer.setText(f"[Directory] {file_path}")
+            return
+
+        if not file_path.exists():
             self.file_viewer.setText(f"File not found: {file_path}")
             return
 
         try:
-            with open(file_path, "r", errors="ignore") as file:
-                content = file.read()
-                self.file_viewer.setText(content)
-        except Exception as e:
-            self.file_viewer.setText(f"Failed to read file: {e}")
+            mime = magic.Magic(mime=True)
+            file_type = mime.from_file(str(file_path))
 
+            if "text" in file_type or "ascii" in file_type:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    self.file_viewer.setText(f.read())
+            else:
+                with open(file_path, "rb") as f:
+                    self.file_viewer.setText(f.read(256).hex())
+        except Exception as e:
+            self.file_viewer.setText(f"Error reading file: {str(e)}")
+                    
     def get_item_path(self, item):
         path = []
         while item is not None:
             path.insert(0, item.text(0))
             item = item.parent()
+            print(path)
         return path
 
 if __name__ == "__main__":
