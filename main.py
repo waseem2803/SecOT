@@ -11,8 +11,12 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
+<<<<<<< HEAD
 from modules import dump,debug,extract_bin,network,hash_crac
 from L_config import temp_path_b
+=======
+from modules import dump, debug, extract_bin, file_extract, dependency_scanner
+>>>>>>> 44cbfab7c5653b54c4b701a089147188f8552344
 import pyfiglet
 import os
 import sys
@@ -44,7 +48,7 @@ class MainWindow(QMainWindow):
 
         # Add buttons to the nav bar
         self.create_nav_buttons()
-        display_character = pyfiglet.Figlet(font="epic")
+        display_character = pyfiglet.Figlet(font='slant')
         nameapp = QLabel(display_character.renderText("SecOT v1.0"))
         font = QFont("Courier New")  # Common monospace font
         font.setPointSize(10)  # Adjust as needed
@@ -67,6 +71,8 @@ class MainWindow(QMainWindow):
             ("Dump", self.Dump),
             ("Extract", self.Extract),
             ("Analyze", self.Analyze),
+            ("Embedded Files Extractor", self.Embedded_File_Extractor),
+            ("Dependency Scanner", self.Dependency_Scanner),
             ("Network Scan", self.scan),
             ("Hash Cracker", self.hashcracker),
         ]
@@ -80,10 +86,11 @@ class MainWindow(QMainWindow):
                     font-size: 14px; 
                     border: 1px solid #ccc; 
                     border-radius: 5px;
-                    background-color: white; 
+                    background-color: ; 
                 }
                 QPushButton:pressed {
                     background-color: grey; 
+                    
                 }
                 QPushButton:hover {
                     background-color: #f0f0f0;
@@ -103,6 +110,16 @@ class MainWindow(QMainWindow):
     def Dump(self):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = dump.DumpFirmware()
+        self.main_layout.addWidget(self.function_window)
+    
+    def Embedded_File_Extractor(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = file_extract.EmbeddedFileExtractor()
+        self.main_layout.addWidget(self.function_window)
+
+    def Dependency_Scanner(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = dependency_scanner.DependencyScanner()
         self.main_layout.addWidget(self.function_window)
 
     def Extract(self):
@@ -141,5 +158,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-  
     sys.exit(app.exec())
