@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
-from modules import dump,debug,extract_bin,network,hash_crac,file_extract,dependency_scanner,analyze
+from modules import dump,debug,extract_bin,network,hash_crac,file_extract,dependency_scanner,analyze , webapp_scanner
 from L_config import temp_path_b
 import pyfiglet
 import os
@@ -56,7 +56,8 @@ class MainWindow(QMainWindow):
         self.function_window.setStyleSheet(
             """
             background-color: white;  /* White background for the function window */
-            font-size: 20px;         /* Font size for content */
+            font-size: 20px;
+            color: black;              /* Font size for content */
             """
         )
         self.main_layout.addWidget(self.function_window)
@@ -71,7 +72,8 @@ class MainWindow(QMainWindow):
            # ("Embedded Files Extractor", self.Embedded_File_Extractor),
             ("Dependency Scanner", self.Dependency_Scanner),
             ("Network Scan", self.scan),
-            ("Hash Cracker", self.hashcracker),
+            ("WebApp Scanner", self.WebApp_Scanner),
+            ("Hash Cracker", self.fuzz),
         ]
 
         for name, handler in buttons:
@@ -126,6 +128,11 @@ class MainWindow(QMainWindow):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = QLabel()
         self.function_window = analyze.BinaryAnalyzer()
+        self.main_layout.addWidget(self.function_window)
+
+    def WebApp_Scanner(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = webapp_scanner.WebAppScanner()
         self.main_layout.addWidget(self.function_window)
 
     def scan(self):

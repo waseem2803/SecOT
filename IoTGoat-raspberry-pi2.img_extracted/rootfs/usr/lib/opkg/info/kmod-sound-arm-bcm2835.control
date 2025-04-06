@@ -1,0 +1,9 @@
+Package: kmod-sound-arm-bcm2835
+Version: 4.9.152-1
+Depends: kernel (=4.9.152-1-788707b8cd7f983457fcdd34f617ec3c), kmod-sound-core
+Source: package/kernel/linux
+License: GPL-2.0
+Section: kernel
+Architecture: arm_cortex-a7_neon-vfpv4
+Installed-Size: 9744
+Description:  This package contains the BCM2835 ALSA pcm card driver

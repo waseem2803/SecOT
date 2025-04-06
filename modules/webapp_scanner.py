@@ -89,6 +89,7 @@ class WebAppScanner(QtWidgets.QWidget):
 
         self.logDisplay = QtWidgets.QTextEdit(self)
         self.logDisplay.setReadOnly(True)
+        self.logDisplay.setStyleSheet("background-color: black; color: white; font-family: Consolas;")
         main_splitter.addWidget(self.logDisplay)
 
         main_layout.addWidget(main_splitter)
@@ -148,7 +149,7 @@ class WebAppScanner(QtWidgets.QWidget):
         self.log(f"[{datetime.now()}] Scan stopped")
 
     def run_dirsearch(self):
-        dirsearch_cmd = f'python3 tools/dirsearch/dirsearch.py -l {os.path.join(self.base_dir, "scope.txt")} -e php,asp,aspx,net,js,cs,php2,php3,php4,php5,php6,php7,jsp,java,python,yaml,yml,config,conf,htaccess,htpasswd,shtml -o {os.path.join(self.base_dir, "dir_enum.txt")}'
+        dirsearch_cmd = f'dirsearch -l {os.path.join(self.base_dir, "scope.txt")} -e php,asp,aspx,net,js,cs,php2,php3,php4,php5,php6,php7,jsp,java,python,yaml,yml,config,conf,htaccess,htpasswd,shtml -o {os.path.join(self.base_dir, "dir_enum.txt")}'
         try:
             subprocess.run(dirsearch_cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
@@ -177,12 +178,12 @@ class WebAppScanner(QtWidgets.QWidget):
         wapiti_cmd = f'wapiti -u {url} -o {os.path.join(self.base_dir, "webapp.json")} -f json'
         try:
             subprocess.run(wapiti_cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            self.log(f"[{datetime.now()}] ✔️ Wapiti scan completed")
+            self.log(f"[{datetime.now()}] ✔️ Vulnerability scan completed")
         except subprocess.CalledProcessError as e:
             self.log(f"[{datetime.now()}] Error running Wapiti: {e}")
 
     def start_wapiti_scan(self):
-        self.log(f"[{datetime.now()}] Wapiti scan started")
+        self.log(f"[{datetime.now()}] Vulnerability scan started")
         future = self.executor.submit(self.run_wapiti)
         future.add_done_callback(lambda _: self.executor.submit(self.list_files))
         future.add_done_callback(lambda _: self.log(f"[{datetime.now()}] Wapiti scan finished"))
@@ -206,7 +207,7 @@ class WebAppScanner(QtWidgets.QWidget):
 
     def install_tool(self, tool):
         install_commands = {
-            "dirsearch": "git clone https://github.com/maurosoria/dirsearch.git tools/dirsearch; cd tools/dirsearch; pip3 install -r requirements.txt --break-system-packages",
+            "dirsearch": "sudo apt install dirsearch",
             "gau": "go install -v github.com/lc/gau@latest",
             "wapiti": "sudo apt install wapiti"
         }
@@ -249,6 +250,29 @@ class WebAppScanner(QtWidgets.QWidget):
                 vuln_item = QtWidgets.QTreeWidgetItem([vuln_type])
                 vuln_item.setData(0, QtCore.Qt.ItemDataRole.UserRole, vuln_list)
                 self.vulnLister.addTopLevelItem(vuln_item)
+    
+    def list_files(self):
+        dir_enum_path = os.path.join(self.base_dir, "dir_enum.txt")
+        gau_path = os.path.join(self.base_dir, "gau.txt")
+
+        # Populate Directory Enumeration Results
+        if os.path.exists(dir_enum_path):
+            self.dirLister.clear()
+            with open(dir_enum_path, "r") as f:
+                for line in f:
+                    clean_line = line.strip()
+                    if clean_line:
+                        self.dirLister.addItem(clean_line)
+
+        # Populate GAU Crawling Results
+        if os.path.exists(gau_path):
+            self.crawlLister.clear()
+            with open(gau_path, "r") as f:
+                for line in f:
+                    clean_line = line.strip()
+                    if clean_line:
+                        self.crawlLister.addItem(clean_line)
+
 
     def toggle_vuln_details(self, item, column):
         vuln_list = item.data(0, QtCore.Qt.ItemDataRole.UserRole)
