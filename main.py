@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
             ("Dependency Scanner", self.Dependency_Scanner),
             ("Network Scan", self.scan),
             ("WebApp Scanner", self.WebApp_Scanner),
-            ("Hash Cracker", self.fuzz),
+            ("Hash Cracker", self.hashcracker),
         ]
 
         for name, handler in buttons:
