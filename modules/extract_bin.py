@@ -2,14 +2,19 @@ import os
 import subprocess
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox, QCheckBox, QComboBox , QSizePolicy
+    QTreeWidget, QTreeWidgetItem, QTextEdit, QPushButton, QFileDialog, QLabel, QMessageBox, QCheckBox, QComboBox , QSizePolicy ,QMenu 
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt , pyqtSignal
+from PyQt6.QtGui import QAction
 from pathlib import Path
 import magic
 from L_config import temp_path_b
 
 class BinwalkFileExtractor(QWidget):
+
+    send_to_hash_cracker = pyqtSignal(str)  # Signal to send file path to hash cracker
+    send_to_analyzer = pyqtSignal(str)     # Signal to send file path to analyzer
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Binwalk File Extractor")
@@ -39,6 +44,10 @@ class BinwalkFileExtractor(QWidget):
         # Select Directory Button
         self.select_dir_button = QPushButton("Select Directory")
         self.select_dir_button.clicked.connect(self.select_directory)
+
+         # Enable context menu for file tree
+        self.file_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.file_tree.customContextMenuRequested.connect(self.show_context_menu)
 
         #scan button
         self.binwalk_button = QPushButton("Scan Binary File")
@@ -217,7 +226,59 @@ class BinwalkFileExtractor(QWidget):
                     self.file_viewer.setText(f.read(256).hex())
         except Exception as e:
             self.file_viewer.setText(f"Error reading file: {str(e)}")
-                    
+
+    def show_context_menu(self, position):
+        item = self.file_tree.itemAt(position)
+        if not item:
+            return
+
+            # Get the full file path
+        file_path = self.get_full_item_path(item)
+        if not file_path or not os.path.isfile(file_path):
+            return
+
+            # Create context menu
+        menu = QMenu(self)
+            
+            # Add actions
+        hash_action = QAction("Send to Hash Cracker", self)
+        hash_action.triggered.connect(lambda: self.send_to_hash_cracker.emit(file_path))
+            
+        analyze_action = QAction("Send to Analyzer", self)
+        analyze_action.triggered.connect(lambda: self.send_to_analyzer.emit(file_path))
+            
+        menu.addAction(hash_action)
+        menu.addAction(analyze_action)
+            
+        # Show the menu
+        menu.exec(self.file_tree.viewport().mapToGlobal(position))
+
+
+    def get_full_item_path(self, item):
+        """Returns the full filesystem path for the given item"""
+        if not self.extracted_dir:
+            return None
+
+        # Get path parts from tree item
+        item_path_parts = self.get_item_path(item)
+        if not item_path_parts:
+            return None
+
+        # Convert to Path objects
+        extracted_dir = Path(self.extracted_dir).resolve()
+        item_path = Path(*item_path_parts)
+
+        # SPECIAL FIX: Remove extracted_dir name if it appears at start of item_path
+        extracted_dir_name = extracted_dir.name
+        if item_path.parts and item_path.parts[0] == extracted_dir_name:
+            item_path = Path(*item_path.parts[1:])  # Remove first component
+
+        # Construct final path
+        full_path = extracted_dir / item_path
+        return str(full_path.resolve())
+
+
+
     def get_item_path(self, item):
         path = []
         while item is not None:

@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QLabel,
     QWidget,
+    QMessageBox
 
 )
 from PyQt6.QtCore import Qt
@@ -44,7 +45,7 @@ class MainWindow(QMainWindow):
 
         # Add buttons to the nav bar
         self.create_nav_buttons()
-        display_character = pyfiglet.Figlet(font='slant')
+        display_character = pyfiglet.Figlet(font='doom')
         nameapp = QLabel(display_character.renderText("SecOT v1.0"))
         font = QFont("Courier New")  # Common monospace font
         font.setPointSize(10)  # Adjust as needed
@@ -108,11 +109,6 @@ class MainWindow(QMainWindow):
         self.function_window = dump.DumpFirmware()
         self.main_layout.addWidget(self.function_window)
     
-    '''def Embedded_File_Extractor(self):
-        self.main_layout.removeWidget(self.function_window)
-        self.function_window = file_extract.EmbeddedFileExtractor()
-        self.main_layout.addWidget(self.function_window)'''
-
     def Dependency_Scanner(self):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = dependency_scanner.DependencyScanner()
@@ -121,6 +117,9 @@ class MainWindow(QMainWindow):
     def Extract(self):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = extract_bin.BinwalkFileExtractor()
+        extractor = extract_bin.BinwalkFileExtractor()
+        extractor.send_to_hash_cracker.connect(self.handle_send_to_hash_cracker)
+       # extractor.send_to_analyzer.connect(self.handle_send_to_analyzer)
         self.main_layout.addWidget(self.function_window)
 
     def Analyze(self):
@@ -135,9 +134,33 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.function_window)
 
     def hashcracker(self):
-        self.main_layout.removeWidget(self.function_window)
+        # Remove current widget if exists
+        if hasattr(self, 'function_window'):
+            self.function_window.setParent(None)
+            self.function_window.deleteLater()
+        
+        # Create new hash cracker instance
         self.function_window = hash_crac.HashCracker()
         self.main_layout.addWidget(self.function_window)
+
+    def handle_send_to_hash_cracker(self, file_path):
+        """Handle file sent to hash cracker - sends only the path"""
+        # Switch to hash cracker tab first
+        self.hashcracker()
+        
+        # Get reference to the hash cracker instance
+        hash_cracker = self.function_window
+        
+        # Check if it has the set_file_path method
+        if hasattr(hash_cracker, 'set_file_path'):
+            try:
+                # Just send the path string
+                hash_cracker.set_file_path(file_path)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", 
+                                f"Failed to set file path:\n{str(e)}")
+        else:
+            QMessageBox.warning(self, "Error", "Hash cracker module doesn't support file path setting")
 
     def quit_gracefully(sig,frame):
         print("Quitting application...")
