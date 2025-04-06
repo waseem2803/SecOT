@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
-from modules import dump, debug, extract_bin, file_extract, dependency_scanner
+from modules import dump, debug, extract_bin, file_extract, dependency_scanner,webapp_scanner
 import pyfiglet
 
 class MainWindow(QMainWindow):
@@ -49,7 +49,8 @@ class MainWindow(QMainWindow):
         self.function_window.setStyleSheet(
             """
             background-color: white;  /* White background for the function window */
-            font-size: 20px;         /* Font size for content */
+            font-size: 20px;
+            color: black;              /* Font size for content */
             """
         )
         self.main_layout.addWidget(self.function_window)
@@ -64,6 +65,7 @@ class MainWindow(QMainWindow):
             ("Embedded Files Extractor", self.Embedded_File_Extractor),
             ("Dependency Scanner", self.Dependency_Scanner),
             ("Network Scan", self.scan),
+            ("WebApp Scanner", self.WebApp_Scanner),
             ("Hash Cracker", self.fuzz),
         ]
 
@@ -121,6 +123,11 @@ class MainWindow(QMainWindow):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = QLabel()
         self.function_window.setText("You are now viewing Function 2")
+        self.main_layout.addWidget(self.function_window)
+
+    def WebApp_Scanner(self):
+        self.main_layout.removeWidget(self.function_window)
+        self.function_window = webapp_scanner.WebAppScanner()
         self.main_layout.addWidget(self.function_window)
 
     def scan(self):
