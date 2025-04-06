@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 import sys
-from modules import dump,debug,extract_bin,network,hash_crac,file_extract,dependency_scanner
+from modules import dump,debug,extract_bin,network,hash_crac,file_extract,dependency_scanner,analyze
 from L_config import temp_path_b
 import pyfiglet
 import os
@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SecOT:IoT penetration testing platform")  # Window title
-        self.setGeometry(100, 100, 800, 600)  # Initial size
+        self.setGeometry(100, 100, 1200, 700)  # Initial size
 
         # Main container widget
         self.central_widget = QWidget()
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
     # Functions to update the function window content
     def Debugger(self):
          self.main_layout.removeWidget(self.function_window)
-         self.function_window = debug.SerialMonitorWidget()
+         self.function_window = debug.IoTDebugMonitor()
          self.main_layout.addWidget(self.function_window)
 
     def Dump(self):
@@ -125,7 +125,7 @@ class MainWindow(QMainWindow):
     def Analyze(self):
         self.main_layout.removeWidget(self.function_window)
         self.function_window = QLabel()
-        self.function_window.setText("You are now viewing Function 2")
+        self.function_window = analyze.BinaryAnalyzer()
         self.main_layout.addWidget(self.function_window)
 
     def scan(self):
