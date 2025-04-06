@@ -16,7 +16,7 @@ class WebAppScanner(QtWidgets.QWidget):
         super().__init__()
         self.initUI()
         
-        self.root_dir = "/home/kali/secot/SecOT"
+        self.root_dir = "/home/mohammed/secOT/SecOT"
         self.base_dir = f"{self.root_dir}/webappscan"
         self.executor = ThreadPoolExecutor(max_workers=1)
         self.check_and_install_tools()

@@ -68,7 +68,7 @@ class MainWindow(QMainWindow):
             ("Debugger", self.Debugger),
             ("Dump", self.Dump),
             ("Extract", self.Extract),
-            ("Analyze", self.Analyze),
+            #("Analyze", self.Analyze),
            # ("Embedded Files Extractor", self.Embedded_File_Extractor),
             ("Dependency Scanner", self.Dependency_Scanner),
             ("Network Scan", self.scan),
