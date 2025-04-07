@@ -11,6 +11,9 @@ from pathlib import Path
 import magic
 from L_config import temp_path_b
 
+
+#this module is used to extract files from a binary using binwalk , it also uses magic to identify the file type and extract using file system tools like unsquashfs
+
 class BinwalkFileExtractor(QMainWindow):
     send_to_hash_cracker = pyqtSignal(str)
     send_to_analyzer = pyqtSignal(str)

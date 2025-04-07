@@ -8,6 +8,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 
+
+#this module is used to dump firmware from IoT devices using different methods , one dumps the firmware using a debugger interface (like JTAG or SWD) and the other uses flashrom to read the firmware from SPI or NAND flash chips.
+# uart dumping is what we are gonna show in review
+
 class FirmwareDumpThread(QThread):
     log_signal = pyqtSignal(str)
     result_signal = pyqtSignal(bool, str)

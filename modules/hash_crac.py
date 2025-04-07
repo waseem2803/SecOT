@@ -9,6 +9,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QProcess, pyqtSignal, Qt
 
+
+#this module is used to compute and crack hashes using various algorithms and tools  uses john the ripper and hashcat and also python for simple agorthims , we can use our custom wordlist or the default wordlist and can add wordlist in the /wordlist directory
+
 class HashCracker(QWidget):
     compute_hash_requested = pyqtSignal()
 
