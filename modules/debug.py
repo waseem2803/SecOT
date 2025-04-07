@@ -11,6 +11,12 @@ from PyQt6.QtGui import QFont, QColor
 import netifaces
 from datetime import datetime
 
+
+#this module is for Debugging the data that's coming out of a iot device , it is essential beacuse from this data we can learn many things about the device , just usual recon,
+#it has 2 functionality one is serial monitor and the other is network sniffer (serial monitor prints the debug info same as terminal and network sniffer captures the packets coming in and out of the device)
+
+
+
 class IoTDebugMonitor(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)

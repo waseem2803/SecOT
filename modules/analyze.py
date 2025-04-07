@@ -14,6 +14,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QFont, QTextCursor
 
+#this module is used for basic reverse engineering task shows string , hex dump etc , not yet fully completed
+
 class AnalysisThread(QThread):
     update_signal = pyqtSignal(dict)
     progress_signal = pyqtSignal(int)

@@ -9,6 +9,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QTextEdit, QList
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtGui import QFont, QTextCursor
 
+#this module is used to scan the network and ports using nmap and scapy , this supports host scanning and port scanning , host scanning is done using ARP, ICMP and Nmap methods , port scanning is done using nmap port scanning has different techniques like -sn -sS -sT -sU -A -sV , -sV is used for service version detection this module also uses netifaces to get the local ip address and the network interface used for scanning.
+
+
 def get_local_ip():
     try:
         iface = netifaces.gateways()['default'][netifaces.AF_INET][1]
